@@ -1,8 +1,22 @@
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import base64
 import json
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:5173",  # Vite dev server
+    "https://tmpa-vite-msal.azurewebsites.net",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def read_root():
