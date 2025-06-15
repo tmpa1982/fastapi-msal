@@ -58,6 +58,13 @@ async def verify_token(auth: HTTPAuthorizationCredentials = Depends(security)):
     except JWTError as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
 
+def check_role(required_role: str):
+    async def role_checker(payload: dict = Depends(verify_token)):
+        roles = payload.get("roles", [])
+        if required_role not in roles:
+            raise HTTPException(status_code=403, detail=f"Missing role: {required_role}")
+        return payload
+    return role_checker
 
 @app.get("/")
 def read_root():
@@ -69,5 +76,14 @@ async def whoami(payload: dict = Depends(verify_token)):
         "sub": payload["sub"],
         "name": payload.get("name"),
         "email": payload.get("email"),
+        "roles": payload.get("roles", []),
         "claims": payload,
     }
+
+@app.get("/read-data")
+async def read_data(payload: dict = Depends(check_role("READ"))):
+    return {"message": "You have READ access."}
+
+@app.post("/write-data")
+async def write_data(payload: dict = Depends(check_role("WRITE"))):
+    return {"message": "You have WRITE access."}
